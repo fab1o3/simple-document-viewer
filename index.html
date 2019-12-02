@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
     <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>Document viewer</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
@@ -52,7 +50,7 @@
             data: {
                 jsonStorage: '',
                 password: '',
-                files: [],
+                file: {},
                 message: '',
                 messageType: '',
                 chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
@@ -115,12 +113,14 @@
                 processFile(event) {
                     let reader = new FileReader();
                     reader.onload = (e) => {
-                        this.files.push(e.target.result);
+                        this.file.name = event.target.files[0].name;
+                        this.file.type = event.target.files[0].type;
+                        this.file.content = this.encode(e.target.result);
                     }
                     reader.readAsArrayBuffer(event.target.files[0]);
                 },
                 save: function () {
-                    let encrypted = sjcl.encrypt(this.password, this.encode(this.files[0]));
+                    let encrypted = sjcl.encrypt(this.password, JSON.stringify(this.file));
                     axios.put(this.jsonStorage, encrypted, { headers: { 'Content-Type': 'application/json; charset=utf-8' } })
                         .then((response) => {
                             this.message = 'Success';
@@ -134,12 +134,13 @@
                 download: function () {
                     axios.get(this.jsonStorage)
                         .then((response) => {
-                            let decrypted = this.decode(sjcl.decrypt(this.password, JSON.stringify(response.data)));
+                            let decrypted = JSON.parse(sjcl.decrypt(this.password, JSON.stringify(response.data)));
 
                             let link = document.createElement('a');
-                            link.download = 'test.pdf';
-                            link.href = window.URL.createObjectURL(new Blob([decrypted], {
-                                type: 'application/octect-stream'
+                            link.download = decrypted.name;
+                            link.target = '_blank';
+                            link.href = window.URL.createObjectURL(new Blob([this.decode(decrypted.content)], {
+                                type: decrypted.type
                             }));
                             link.click();
                         });
