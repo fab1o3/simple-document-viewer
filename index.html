@@ -168,7 +168,11 @@
                                     link.click();
                                     break;
                             }
-                        });
+                        })
+                        .catch((error) => {
+							// handle error
+							console.log(error);
+						});
                 }
             }
         });
