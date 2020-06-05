@@ -170,9 +170,9 @@
                             }
                         })
                         .catch((error) => {
-							// handle error
-							console.log(error);
-						});
+				this.message = JSON.stringify(error);
+                            	this.messageType = 'is-danger';
+			});
                 }
             }
         });
