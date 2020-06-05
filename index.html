@@ -150,6 +150,7 @@
                 view: function () {
                     axios.get(this.jsonStorage)
                         .then((response) => {
+			    this.message = null;
                             let decrypted = JSON.parse(sjcl.decrypt(this.password, JSON.stringify(response.data)));
 
                             switch (decrypted.type) {
