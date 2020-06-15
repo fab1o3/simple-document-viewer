@@ -39,11 +39,6 @@
                 {{ message }}
             </div>
             <embed v-if="url" v-bind:src="url" width="100%" height="600px" />
-            <div class="columns" v-if="url">
-                <div class="column is-full">
-                    <textarea class="textarea" placeholder="Notes" v-model="notes"></textarea>
-                </div>
-            </div>
         </div>
     </section>
 
