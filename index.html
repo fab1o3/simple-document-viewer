@@ -29,6 +29,12 @@
                 <div class="column">
                     <button id="saveButton" class="button" v-on:click="save()">Save</button>
                 </div>
+                <div class="column">
+                    <input class="input" type="text" placeholder="Username" v-model="storageUser">
+                </div>
+                <div class="column">
+                    <input class="input" type="password" placeholder="Password" v-model="storagePassword">
+                </div>
             </div>
             <div class="columns" v-if="password && jsonStorage">
                 <div class="column">
@@ -50,6 +56,8 @@
             el: '#app',
             data: {
                 jsonStorage: '',
+                storageUser: null,
+                storagePassword: null,
                 password: '',
                 file: {},
                 message: '',
@@ -124,7 +132,13 @@
                 },
                 save: function () {
                     let encrypted = sjcl.encrypt(this.password, JSON.stringify(this.file));
-                    axios.put(this.jsonStorage, encrypted, { headers: { 'Content-Type': 'application/json; charset=utf-8' } })
+                    axios.put(this.jsonStorage, encrypted, {
+                        auth: {
+                            username: this.storageUser,
+                            password: this.storagePassword
+                        },
+                        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+                    })
                         .then((response) => {
                             this.message = 'Success';
                             this.messageType = 'is-success';
@@ -140,7 +154,7 @@
                 view: function () {
                     axios.get(this.jsonStorage)
                         .then((response) => {
-			    this.message = null;
+                            this.message = null;
                             let decrypted = JSON.parse(sjcl.decrypt(this.password, JSON.stringify(response.data)));
 
                             switch (decrypted.type) {
@@ -161,9 +175,9 @@
                             }
                         })
                         .catch((error) => {
-				this.message = JSON.stringify(error);
-                            	this.messageType = 'is-danger';
-			});
+                            this.message = JSON.stringify(error);
+                            this.messageType = 'is-danger';
+                        });
                 }
             }
         });
