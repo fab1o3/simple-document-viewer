@@ -26,13 +26,13 @@
                 <div class="column">
                     <input class="input" id="file" type="file" v-on:change="processFile($event)" />
                 </div>
-                <div class="column">
+                <div class="column is-1">
                     <button id="saveButton" class="button" v-on:click="save()">Save</button>
                 </div>
-                <div class="column">
+                <div class="column is-2">
                     <input class="input" type="text" placeholder="Username" v-model="storageUser">
                 </div>
-                <div class="column">
+                <div class="column is-2">
                     <input class="input" type="password" placeholder="Password" v-model="storagePassword">
                 </div>
             </div>
@@ -138,46 +138,47 @@
                             password: this.storagePassword
                         },
                         headers: { 'Content-Type': 'application/json; charset=utf-8' }
-                    })
-                        .then((response) => {
-                            this.message = 'Success';
-                            this.messageType = 'is-success';
-                        })
-                        .catch((error) => {
-                            this.message = JSON.stringify(error);
-                            this.messageType = 'is-danger';
-                        });
+                    }).then((response) => {
+                        this.message = 'Success';
+                        this.messageType = 'is-success';
+                    }).catch((error) => {
+                        this.message = JSON.stringify(error);
+                        this.messageType = 'is-danger';
+                    });
                 },
                 saveNotes: function () {
                     localStorage.sdv_notes = this.notes;
                 },
                 view: function () {
-                    axios.get(this.jsonStorage)
-                        .then((response) => {
-                            this.message = null;
-                            let decrypted = JSON.parse(sjcl.decrypt(this.password, JSON.stringify(response.data)));
+                    axios.get(this.jsonStorage, {
+                        auth: {
+                            username: this.storageUser,
+                            password: this.storagePassword
+                        },
+                    }).then((response) => {
+                        this.message = null;
+                        let decrypted = JSON.parse(sjcl.decrypt(this.password, JSON.stringify(response.data)));
 
-                            switch (decrypted.type) {
-                                case 'application/pdf':
-                                    this.url = window.URL.createObjectURL(new Blob([this.decode(decrypted.content)], {
-                                        type: decrypted.type
-                                    }));
-                                    break;
-                                default:
-                                    let link = document.createElement('a');
-                                    link.download = decrypted.name;
-                                    link.target = '_blank';
-                                    link.href = window.URL.createObjectURL(new Blob([this.decode(decrypted.content)], {
-                                        type: decrypted.type
-                                    }));
-                                    link.click();
-                                    break;
-                            }
-                        })
-                        .catch((error) => {
-                            this.message = JSON.stringify(error);
-                            this.messageType = 'is-danger';
-                        });
+                        switch (decrypted.type) {
+                            case 'application/pdf':
+                                this.url = window.URL.createObjectURL(new Blob([this.decode(decrypted.content)], {
+                                    type: decrypted.type
+                                }));
+                                break;
+                            default:
+                                let link = document.createElement('a');
+                                link.download = decrypted.name;
+                                link.target = '_blank';
+                                link.href = window.URL.createObjectURL(new Blob([this.decode(decrypted.content)], {
+                                    type: decrypted.type
+                                }));
+                                link.click();
+                                break;
+                        }
+                    }).catch((error) => {
+                        this.message = JSON.stringify(error);
+                        this.messageType = 'is-danger';
+                    });
                 }
             }
         });
