@@ -34,9 +34,9 @@ class DocumentViewer extends React.Component {
 		reader.readAsArrayBuffer(event.target.files[0]);
   }
 	
-	updateDocumentList() {
+	updateDocumentList(documents) {
 		var self = this;
-		axios.put(this.props.documentsUrl, this.state.documents, {
+		axios.put(this.props.documentsUrl, documents, {
 			headers: { 'Content-Type': 'application/json; charset=utf-8' }
 		}).then((response) => {
 			self.logResponse(response);
@@ -55,7 +55,7 @@ class DocumentViewer extends React.Component {
     		documents: [...previousState.documents, {value: response.data.uri, name: self.state.file.name}]
 			}));
 			
-			self.updateDocumentList();
+			self.updateDocumentList(self.state.documents);
 
 		}).catch((error) => {
 			console.log(error);
@@ -100,16 +100,20 @@ class DocumentViewer extends React.Component {
 		let self = this;
 		axios.delete(this.state.selectedDocument).then((response) => {
 			self.logResponse(response);
-			self.setState({documents: this.state.documents.filter(function(document) { 
-        return document !== self.state.selectedDocument
-    	})});
+			let newDocumentList = self.state.documents.filter(function(document) { 
+        return document.value !== self.state.selectedDocument
+    	});
+
+			self.setState({documents: newDocumentList});
+
+			self.updateDocumentList(newDocumentList);
 		});
 	}
 	
 	encode(arraybuffer) {
 		var bytes = new Uint8Array(arraybuffer),
 				i, len = bytes.length, base64 = "";
-
+				
 		for (i = 0; i < len; i += 3) {
 			base64 += this.state.chars[bytes[i] >> 2];
 			base64 += this.state.chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
