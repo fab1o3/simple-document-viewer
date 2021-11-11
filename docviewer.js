@@ -2,14 +2,14 @@ class DocumentViewer extends React.Component {
 	constructor(props) {
   	super(props);
   	// Don't call this.setState() here!
-  	this.state = {documents: [], chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", lookup: new Uint8Array(256), encryptionPsw: '', decryptionPsw: ''};
+  	this.state = {documents: [], encryptionPsw: '', decryptionPsw: ''};
   	// this.handleClick = this.handleClick.bind(this);
 		this.processFile = this.processFile.bind(this);
 		this.saveFile = this.saveFile.bind(this);
 		this.viewFile = this.viewFile.bind(this);
 		this.deleteFile = this.deleteFile.bind(this);
 		this.handleInputChange = this.handleInputChange.bind(this);
-		this.updateDocumentList = this.updateDocumentList.bind(this);
+		// this.updateDocumentList = this.updateDocumentList.bind(this);
 	}
 	
 	componentDidMount() {
@@ -30,6 +30,7 @@ class DocumentViewer extends React.Component {
 		let self = this;
 		reader.onload = (e) => {
 			self.setState({file: {name: event.target.files[0].name, type: event.target.files[0].type, content: self.encode(e.target.result)}});
+			console.log(self.state);
 		}
 		reader.readAsArrayBuffer(event.target.files[0]);
   }
@@ -68,17 +69,18 @@ class DocumentViewer extends React.Component {
 			self.logResponse(response)
 			let decrypted = JSON.parse(sjcl.decrypt(self.state.decryptionPsw, JSON.stringify(response.data)));
 			switch (decrypted.type) {
-				case 'application/pdf':
-					let objectUrl =  window.URL.createObjectURL(new Blob([self.decode(decrypted.content)], {type: decrypted.type}));
+				case 'test':
+					let objectUrl = window.URL.createObjectURL(new Blob([self.decode(decrypted.content)], {type: decrypted.type}));
 				
 					self.setState({documentSrc: objectUrl});
 								
 					break;
+				case 'application/pdf':
 				default:
 					let link = document.createElement('a');
 					link.download = decrypted.name;
 					link.target = '_blank';
-					link.href = window.URL.createObjectURL(new Blob([this.decode(decrypted.content)], {
+					link.href = window.URL.createObjectURL(new Blob([self.decode(decrypted.content)], {
 						type: decrypted.type
 					}));
 					link.click();
@@ -111,52 +113,23 @@ class DocumentViewer extends React.Component {
 	}
 	
 	encode(arraybuffer) {
-		var bytes = new Uint8Array(arraybuffer),
-				i, len = bytes.length, base64 = "";
-				
-		for (i = 0; i < len; i += 3) {
-			base64 += this.state.chars[bytes[i] >> 2];
-			base64 += this.state.chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
-			base64 += this.state.chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
-			base64 += this.state.chars[bytes[i + 2] & 63];
+		var binary = '';
+		var bytes = new Uint8Array( arraybuffer );
+		var len = bytes.byteLength;
+		for (var i = 0; i < len; i++) {
+			binary += String.fromCharCode( bytes[ i ] );
 		}
-
-		if ((len % 3) === 2) {
-			base64 = base64.substring(0, base64.length - 1) + "=";
-		} else if (len % 3 === 1) {
-			base64 = base64.substring(0, base64.length - 2) + "==";
-		}
-
-		return base64;
+		return window.btoa( binary );
 	}
 	
 	decode(base64) {
-		var bufferLength = base64.length * 0.75,
-				len = base64.length, i, p = 0,
-				encoded1, encoded2, encoded3, encoded4;
-
-		if (base64[base64.length - 1] === "=") {
-			bufferLength--;
-			if (base64[base64.length - 2] === "=") {
-				bufferLength--;
-			}
-		}
-
-		var arraybuffer = new ArrayBuffer(bufferLength),
-				bytes = new Uint8Array(arraybuffer);
-
-		for (i = 0; i < len; i += 4) {
-			encoded1 = this.state.lookup[base64.charCodeAt(i)];
-			encoded2 = this.state.lookup[base64.charCodeAt(i + 1)];
-			encoded3 = this.state.lookup[base64.charCodeAt(i + 2)];
-			encoded4 = this.state.lookup[base64.charCodeAt(i + 3)];
-
-			bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
-			bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
-			bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
-		}
-
-		return arraybuffer;
+		var binary_string =  window.atob(base64);
+    var len = binary_string.length;
+    var bytes = new Uint8Array( len );
+    for (var i = 0; i < len; i++)        {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes.buffer;
 	}
 	
 	logResponse(response){
