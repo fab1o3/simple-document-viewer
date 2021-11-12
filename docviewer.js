@@ -2,27 +2,31 @@ class DocumentViewer extends React.Component {
 	constructor(props) {
   	super(props);
   	// Don't call this.setState() here!
-  	this.state = {documents: [], encryptionPsw: '', decryptionPsw: ''};
+  	this.state = {documents: [], documentsUrl: '', encryptionPsw: '', decryptionPsw: ''};
   	// this.handleClick = this.handleClick.bind(this);
 		this.processFile = this.processFile.bind(this);
 		this.saveFile = this.saveFile.bind(this);
 		this.viewFile = this.viewFile.bind(this);
 		this.deleteFile = this.deleteFile.bind(this);
+		this.loadDocuments = this.loadDocuments.bind(this);
 		this.handleInputChange = this.handleInputChange.bind(this);
 		// this.updateDocumentList = this.updateDocumentList.bind(this);
 	}
 	
 	componentDidMount() {
-		let self = this;
-  	axios.get(this.props.documentsUrl).then(function (response){
-			self.logResponse(response);
-  		self.setState({documents: response.data});
-			self.setState({selectedDocument: self.state.documents[0]});
-  	});
   }
 
   componentWillUnmount() {
   }
+	
+	loadDocuments(e){
+		let self = this;
+  	axios.get(this.state.documentsUrl).then(function (response){
+			self.logResponse(response);
+  		self.setState({documents: response.data});
+			self.setState({selectedDocument: self.state.documents[0].value});
+  	});
+	}
 
 	processFile(event) {
     event.preventDefault();
@@ -30,7 +34,6 @@ class DocumentViewer extends React.Component {
 		let self = this;
 		reader.onload = (e) => {
 			self.setState({file: {name: event.target.files[0].name, type: event.target.files[0].type, content: self.encode(e.target.result)}});
-			console.log(self.state);
 		}
 		reader.readAsArrayBuffer(event.target.files[0]);
   }
@@ -151,9 +154,17 @@ class DocumentViewer extends React.Component {
          		<input className="input" type="password" placeholder="Insert password" value={this.state.encryptionPsw} name="encryptionPsw" onChange={this.handleInputChange}/>
           </div>
           <div className="column is-1">
-            <button id="saveButton" className="button" onClick={this.saveFile}>Save</button>
+            <button id="saveButton" className="button" onClick={this.saveFile} disabled={!this.state.encryptionPsw}>Save</button>
           </div>
         </div>
+				<div className="columns">
+					<div className="column">
+            <input className="input" placeholder="Insert document list storage" value={this.state.documentsUrl} name="documentsUrl" onChange={this.handleInputChange}/>
+          </div>
+					<div className="column is-1">
+            <button className="button" type="button" disabled={!this.state.documentsUrl} onClick={this.loadDocuments}>Load</button>
+          </div>
+				</div>
         <div className="columns">
           <div className="column">
 				  	<select className="input" id="documents" value={this.state.selectedDocument} name="selectedDocument" onChange={this.handleInputChange}>
@@ -161,7 +172,7 @@ class DocumentViewer extends React.Component {
 						</select>
           </div>
 					<div className="column is-1">
-            <button className="button" type="button" target="_blank" onClick={this.deleteFile}>Delete</button>
+            <button className="button" type="button" target="_blank" onClick={this.deleteFile} disabled={!this.state.selectedDocument}>Delete</button>
           </div>
         </div>
 				<div className="columns">
@@ -169,7 +180,7 @@ class DocumentViewer extends React.Component {
          		<input className="input" type="password" placeholder="Insert password" value={this.state.decryptionPsw} name="decryptionPsw" onChange={this.handleInputChange}/>
           </div>
 					 <div className="column is-1">
-            <button className="button" type="button" target="_blank" onClick={this.viewFile}>View</button>
+            <button className="button" type="button" target="_blank" onClick={this.viewFile} disabled={!this.state.decryptionPsw || !this.state.selectedDocument}>View</button>
           </div>
 				</div>
 				<embed src={this.state.documentSrc} width="100%" height="600px" />
@@ -178,4 +189,4 @@ class DocumentViewer extends React.Component {
   }
 }
           
-ReactDOM.render(<DocumentViewer documentsUrl="https://jsonstorage.net/api/items/fa383df6-a968-4acb-be38-57868b6113f6" newDocumentUrl="https://api.jsonstorage.net/v1/json"/>, document.getElementById('root'));
+ReactDOM.render(<DocumentViewer newDocumentUrl="https://api.jsonstorage.net/v1/json"/>, document.getElementById('root'));
