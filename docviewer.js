@@ -68,7 +68,7 @@ class DocumentViewer extends React.Component {
 	
 	viewFile(e) {
 		let self = this;
-		axios.get(this.state.selectedDocument.value).then((response) => {
+		axios.get(this.state.selectedDocument).then((response) => {
 			self.logResponse(response)
 			let decrypted = JSON.parse(sjcl.decrypt(self.state.decryptionPsw, JSON.stringify(response.data)));
 			switch (decrypted.type) {
