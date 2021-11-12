@@ -69,13 +69,12 @@ class DocumentViewer extends React.Component {
 			self.logResponse(response)
 			let decrypted = JSON.parse(sjcl.decrypt(self.state.decryptionPsw, JSON.stringify(response.data)));
 			switch (decrypted.type) {
-				case 'test':
+				case 'application/pdf':
 					let objectUrl = window.URL.createObjectURL(new Blob([self.decode(decrypted.content)], {type: decrypted.type}));
 				
 					self.setState({documentSrc: objectUrl});
 								
 					break;
-				case 'application/pdf':
 				default:
 					let link = document.createElement('a');
 					link.download = decrypted.name;
